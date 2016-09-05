@@ -378,7 +378,7 @@ class TripAdvisor:
 					rg = re.compile(re1+re2+re3,re.IGNORECASE|re.DOTALL|re.U)
 					m = rg.search(text)
 					if m:
-						rankingInCity = m.group(1)+'/'+m.group(3)
+						rankingInCity = m.group(1)+'/'+m.group(4)
 			if response.find('span',{'class':'tag'}):
 				if response.find('span',{'class':'tag'}).getText():
 					# hotelTagCloud = [element.getText().strip().encode('utf-8') for element in response.findAll('span',{'class':'tag'}) if element.getText()]
