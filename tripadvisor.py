@@ -139,7 +139,7 @@ class TripAdvisor:
 				# print url
 				self.headers['Upgrade-Insecure-Requests']=1
 				try:
-					response = BeautifulSoup(self.s.get(url,headers=self.headers).text,'html')
+					response = BeautifulSoup(self.s.get(url,headers=self.headers).text,'lxml')
 				except:
 					return
 				# print response
@@ -483,38 +483,94 @@ class TripAdvisor:
 							else:
 								continue
 			print "retriving reviews"
-			if response.find('div',{'id':'REVIEWS'}):
-				all_review = response.find('div',{'id':'REVIEWS'})
-				review_list = all_review.findAll('div',{'class':'reviewSelector'})
-				for review in review_list:
+			last_page = 1
+			try:
+				last_page = response.find('div',{'class':'pageNumbers'}).findAll('a',{'class':'pageNum taLnk'})[-1].get('data-page-number')
+				print "last page ",last_page
+			except:
+				print "could not retrive last page"
+				pass
+			last_page = int(last_page)
+			pageCount = 1
+			try:
+				all_page = dict([(element.get('data-page-number'),self.baseurl+element.get('href')[1:]) for element in response.find('div',{'class':'pageNumbers'}).findAll('a')])
+			except:
+				pass
+			while (pageCount <= last_page):
+				if ((pageCount > 1) and (str(pageCount) not in all_page.keys())):
+					# print "pageCount", pageCount
+					new_page_url=None
+					if response.find('div',{'class':'pageNumbers'}):
+						new_page_url = response.find('div',{'class':'pageNumbers'}).find('a',{'data-page-number':str(pageCount)})
+					elif response.find('a',{'data-page-number':str(pageCount)}):
+						new_page_url = response.find('a',{'data-page-number':str(pageCount)})
+					if new_page_url:
+						new_page_url = new_page_url.get('href')
+						all_page[str(pageCount)] = self.baseurl+new_page_url[1:]
+						# print all_page.keys()
+					else:
+						pageCount += 1
+						continue
+				if pageCount > 1:
 					try:
-						review_date = review.find('span',{'class':'ratingDate'}).getText()
-						if self.baseurl == "https://www.tripadvisor.com/":
-							review_date = review_date.strip("Reviewed ")
+						response = BeautifulSoup(self.s.get(all_page[str(pageCount)],headers=self.headers).text,'lxml')
 					except:
-						review_date = ''
-					try:
-						username = review.find('div',{'class':re.compile('username')}).getText().strip()
-					except:
-						username = ''
-					try:
-						userRanking = review.find('div',{'class':re.compile('levelBadge')}).get("class")[-1]
-					except:
-						userRanking = ''
-					try:
-						userReviewCount = int(re.search('(\\d+)', review.find('div',{'class':'reviewerBadge badge'}).getText().strip().replace(',','').replace('  ','')).group(1))
-					except:
-						userReviewCount = 0
-					try:
-						reviewText = review.find('div',{'class':'entry'}).getText().replace('\n\n','')
-					except:
-						reviewText = ''
-					try:
-						score = float(re.search('(\\d+(\\.\\d+)?)', review.find('span',{'class':'rate sprite-rating_s rating_s'}).find('img').get('alt').strip().replace(',','').replace('  ','')).group(1))
-					except:
-						score = 0
-					reviews.append({'review_date':review_date,'username':username,'userRanking':userRanking,'userReviewCount':userReviewCount,'reviewText':reviewText,'score':score,})
-
+						pageCount += 1
+						continue
+				try:
+					if response.find('div',{'id':'REVIEWS'}):
+						all_review = response.find('div',{'id':'REVIEWS'})
+						review_list = all_review.findAll('div',{'class':'reviewSelector'})
+						if not review_list[0].getText().strip():
+							# print "new condition"
+							id_string = ':'.join([element.get("id").split('_')[-1] for element in review_list])
+							# print id_string
+							args = {'a':'rblock',
+								'r':id_string,
+								'type':'0',
+								'tr':True,
+								'n':'16',
+								'd':hotelId}
+							response = BeautifulSoup(self.s.get(self.baseurl+"/UserReviewController",headers = self.headers, params = args).text,'lxml')
+							review_list = response.findAll('div',{'class':'reviewSelector'})
+						for review in review_list:
+							# print "review loop"
+							try:
+								if review.find('span',{'class':'ratingDate relativeDate'}):
+									review_date = review.find('span',{'class':'ratingDate relativeDate'}).get("title")
+								else:
+									review_date = review.find('span',{'class':'ratingDate'}).getText()
+									if self.baseurl == "https://www.tripadvisor.com/":
+										review_date = review_date.strip("Reviewed ")
+							except:
+								# print "date not found"
+								review_date = ''
+							try:
+								username = review.find('div',{'class':re.compile('username')}).getText().strip()
+							except:
+								username = ''
+							try:
+								userRanking = review.find('div',{'class':re.compile('levelBadge')}).get("class")[-1]
+							except:
+								userRanking = ''
+							try:
+								userReviewCount = int(re.search('(\\d+)', review.find('div',{'class':'reviewerBadge badge'}).getText().strip().replace(',','').replace('  ','')).group(1))
+							except:
+								userReviewCount = 0
+							try:
+								reviewText = review.find('div',{'class':'entry'}).getText().replace('\n\n','').replace('  ','')
+							except:
+								reviewText = ''
+							try:
+								score = float(re.search('(\\d+(\\.\\d+)?)', review.find('span',{'class':'rate sprite-rating_s rating_s'}).find('img').get('alt').strip().replace(',','').replace('  ','')).group(1))
+							except:
+								score = 0
+							reviews.append({'review_date':review_date,'username':username,'userRanking':userRanking,'userReviewCount':userReviewCount,'reviewText':reviewText,'score':score,})
+					pageCount += 1
+				except:
+					# print ": main block excepted"
+					pageCount += 1
+					continue
 			result = {
 						'hotelTripadvisorId':hotelTripadvisorId,
 						'hotelName': hotelName,
@@ -535,9 +591,7 @@ class TripAdvisor:
 						'images':images,
 						'reviews':reviews,
 						}
-
 			new_file_name = details['language']+'-'+details['location']+'-'+hotelId+'.json'
 			with io.open(new_file_name, 'w',encoding='utf8') as new_file:
 				new_file.write(unicode(json.dumps(result, ensure_ascii=False, sort_keys=True, indent=4)))
 			print new_file_name+" file processed"
-			# 	exit(0)
