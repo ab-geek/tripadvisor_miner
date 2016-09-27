@@ -38,6 +38,7 @@ class TripAdvisor:
 			try:
 				response = self.s.get(self.baseurl).text
 			except:
+				print "cant retrive the base url"
 				return
 			re1='(\')'	# Any Single Character 1
 			re2='(typeahead)'	# Word 1
@@ -299,8 +300,13 @@ class TripAdvisor:
 						if email:
 							email = email.get('value')
 							hotelEmail = email
-			if address.find('span', {'property': 'streetAddress'}):
-				strAddress = address.find('span', {'property': 'streetAddress'}).getText()
+			# if address.find('span', {'property': 'streetAddress'}):
+			# 	strAddress = address.find('span', {'property': 'streetAddress'}).getText()
+			# 	if strAddress:
+			# 		# streetAddress = strAddress.encode('utf-8')
+			# 		streetAddress = strAddress
+			if address.find('span', {'class': 'format_address'}):
+				strAddress = address.find('span', {'class': 'format_address'}).getText()
 				if strAddress:
 					# streetAddress = strAddress.encode('utf-8')
 					streetAddress = strAddress
@@ -379,10 +385,6 @@ class TripAdvisor:
 					m = rg.search(text)
 					if m:
 						rankingInCity = m.group(1)+'/'+m.group(4)
-			if response.find('span',{'class':'tag'}):
-				if response.find('span',{'class':'tag'}).getText():
-					# hotelTagCloud = [element.getText().strip().encode('utf-8') for element in response.findAll('span',{'class':'tag'}) if element.getText()]
-					hotelTagCloud = [element.getText().strip() for element in response.findAll('span',{'class':'tag'}) if element.getText()]
 			
 			if response.find('div',{'id':'AMENITIES_TAB'}):
 				aminities_tab = response.find('div',{'id':'AMENITIES_TAB'})
@@ -391,43 +393,43 @@ class TripAdvisor:
 					if span:
 						if span.getText():
 							# officialHotelDescription = span.getText().encode('utf-8')
-							officialHotelDescription = span.getText()
+							officialHotelDescription = span.getText().strip()
 				if aminities_tab.find('div',{'class':'additional_info_amenities'}):
 					span = aminities_tab.find('div',{'class':'additional_info_amenities'}).find('div',{'class':'content'})
 					if span:
 						span = span.getText()
 						if span:
 							# additionalHotelInformation = span.replace('\n\n','\n').encode('utf-8')
-							additionalHotelInformation = span.replace('\n\n','\n')
+							additionalHotelInformation = span.replace('\n\n','\n').strip()
 				try:
 					all_highlights = aminities_tab.find('div',{'class':'amenity_hdr highlights'}).findNext('div',{'class':'property_tags_wrap'}).findAll('li')
 					# amenities['highlights'] = [element.getText().replace("  "," ").replace('\n','').encode('utf-8') for element in all_highlights]
-					amenities['highlights'] = [element.getText().replace("  "," ").replace('\n','') for element in all_highlights]
+					amenities['highlights'] = [element.getText().replace("  "," ").replace('\n','').strip() for element in all_highlights]
 				except:
 					pass
 				try:
 					# amenities['aboutTheProperty'] = [element.getText().replace('\n','').replace('  ',' ').encode('utf-8') for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('About the property')).findNext('div').findAll('li')]
-					amenities['aboutTheProperty'] = [element.getText().replace('\n','').replace('  ',' ') for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('About the property')).findNext('div').findAll('li')]
+					amenities['aboutTheProperty'] = [element.getText().replace('\n','').replace('  ',' ').strip() for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('About the property')).findNext('div').findAll('li')]
 				except:
 					pass
 				try:
 					# amenities['thingsToDo'] = [element.getText().replace('\n','').replace('  ',' ').encode('utf-8') for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Things to do')).findNext('div').findAll('li')]
-					amenities['thingsToDo'] = [element.getText().replace('\n','').replace('  ',' ') for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Things to do')).findNext('div').findAll('li')]
+					amenities['thingsToDo'] = [element.getText().replace('\n','').replace('  ',' ').strip() for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Things to do')).findNext('div').findAll('li')]
 				except:
 					pass
 				try:
 					# amenities['roomTypes'] = [element.getText().replace('\n','').replace('  ',' ').encode('utf-8') for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Room types')).findNext('div').findAll('li')]
-					amenities['roomTypes'] = [element.getText().replace('\n','').replace('  ',' ') for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Room types')).findNext('div').findAll('li')]
+					amenities['roomTypes'] = [element.getText().replace('\n','').replace('  ',' ').strip() for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Room types')).findNext('div').findAll('li')]
 				except:
 					pass
 				try:
 					# amenities['internet'] = [element.getText().replace('\n','').replace('  ',' ').encode('utf-8') for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Internet')).findNext('div').findAll('li')]
-					amenities['internet'] = [element.getText().replace('\n','').replace('  ',' ') for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Internet')).findNext('div').findAll('li')]
+					amenities['internet'] = [element.getText().replace('\n','').replace('  ',' ').strip() for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Internet')).findNext('div').findAll('li')]
 				except:
 					pass
 				try:
 					# amenities['services'] = [element.getText().replace('\n','').replace('  ',' ').encode('utf-8') for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Services')).findNext('div').findAll('li')]
-					amenities['services'] = [element.getText().replace('\n','').replace('  ',' ') for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Services')).findNext('div').findAll('li')]
+					amenities['services'] = [element.getText().replace('\n','').replace('  ',' ').strip() for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Services')).findNext('div').findAll('li')]
 				except:
 					pass
 			print "retriving images"
@@ -483,6 +485,10 @@ class TripAdvisor:
 							else:
 								continue
 			print "retriving reviews"
+			if response.find('form',{'action':'/SetReviewFilter#REVIEWS'}):
+				if response.find('div',{'class':'ui_tagcloud_group easyClear'}):
+					# hotelTagCloud = [element.getText().strip().encode('utf-8') for element in response.findAll('span',{'class':'tag'}) if element.getText()]
+					hotelTagCloud = [element.get("data-content") for element in response.findAll('span',{'class':'ui_tagcloud fl'}) if element.get("data-content")]
 			last_page = 1
 			try:
 				last_page = response.find('div',{'class':'pageNumbers'}).findAll('a',{'class':'pageNum taLnk'})[-1].get('data-page-number')
@@ -498,7 +504,6 @@ class TripAdvisor:
 				pass
 			while (pageCount <= last_page):
 				if ((pageCount > 1) and (str(pageCount) not in all_page.keys())):
-					# print "pageCount", pageCount
 					new_page_url=None
 					if response.find('div',{'class':'pageNumbers'}):
 						new_page_url = response.find('div',{'class':'pageNumbers'}).find('a',{'data-page-number':str(pageCount)})
@@ -507,7 +512,6 @@ class TripAdvisor:
 					if new_page_url:
 						new_page_url = new_page_url.get('href')
 						all_page[str(pageCount)] = self.baseurl+new_page_url[1:]
-						# print all_page.keys()
 					else:
 						pageCount += 1
 						continue
@@ -515,26 +519,28 @@ class TripAdvisor:
 					try:
 						response = BeautifulSoup(self.s.get(all_page[str(pageCount)],headers=self.headers).text,'lxml')
 					except:
+						print "could not retrive reviews from"
+						print all_page[str(pageCount)]
 						pageCount += 1
 						continue
 				try:
 					if response.find('div',{'id':'REVIEWS'}):
 						all_review = response.find('div',{'id':'REVIEWS'})
 						review_list = all_review.findAll('div',{'class':'reviewSelector'})
-						if not review_list[0].getText().strip():
-							# print "new condition"
-							id_string = ':'.join([element.get("id").split('_')[-1] for element in review_list])
-							# print id_string
+						hidden_review_list = [element for element in review_list if not element.getText().strip()]
+						hidden_reviews = [element.get("id").strip('review_') for element in review_list if not element.getText().strip()]
+						hidden_reviews = ':'.join(hidden_reviews)
+						review_list = [element for element in review_list if element not in hidden_review_list]
+						if hidden_reviews:
 							args = {'a':'rblock',
-								'r':id_string,
+								'r':hidden_reviews,
 								'type':'0',
 								'tr':True,
 								'n':'16',
 								'd':hotelId}
-							response = BeautifulSoup(self.s.get(self.baseurl+"/UserReviewController",headers = self.headers, params = args).text,'lxml')
-							review_list = response.findAll('div',{'class':'reviewSelector'})
+							controler_response = BeautifulSoup(self.s.get(self.baseurl+"/UserReviewController",headers = self.headers, params = args).text,'lxml')
+							review_list += controler_response.findAll('div',{'class':'reviewSelector'})
 						for review in review_list:
-							# print "review loop"
 							try:
 								if review.find('span',{'class':'ratingDate relativeDate'}):
 									review_date = review.find('span',{'class':'ratingDate relativeDate'}).get("title")
@@ -543,10 +549,22 @@ class TripAdvisor:
 									if self.baseurl == "https://www.tripadvisor.com/":
 										review_date = review_date.strip("Reviewed ")
 							except:
-								# print "date not found"
 								review_date = ''
 							try:
 								username = review.find('div',{'class':re.compile('username')}).getText().strip()
+								if "..." in username:
+									args3 = {
+										"Mode":"owa",
+										"uid":re.compile(r'(UID_)([^-]+?)(-.*)',re.IGNORECASE|re.DOTALL).search(review.find("div",{"class":"memberOverlayLink"}).get("id")).group(2),
+										"c":None,
+										"src":re.sub(r'UID_.+\-SRC_','',review.find("div",{"class":"memberOverlayLink"}).get("id")),
+										"fus":False,
+										"partner":False,
+										"LsoId":None,
+										"metaReferer":"Hotel_Review",
+										}
+									usr_response = BeautifulSoup(self.s.post(self.baseurl+"/MemberOverlay",params = args3, headers=self.headers).text,'lxml')
+									username = usr_response.find("h3",{"class":"username"}).getText()
 							except:
 								username = ''
 							try:
@@ -558,17 +576,48 @@ class TripAdvisor:
 							except:
 								userReviewCount = 0
 							try:
-								reviewText = review.find('div',{'class':'entry'}).getText().replace('\n\n','').replace('  ','')
-							except:
+								reviewText = review.find('div',{'class':'entry'}).find("p").getText().strip().replace('\n\n','').replace('  ','')
+								if (review.find('div',{'class':'entry'}).find('p',{'class':'partial_entry'}) and reviewText[-3:]=="ore"):
+									arg4 = {
+										'target':review.get("id").strip("review_"),
+										'context':'1',
+										'reviews':','.join([element.get("id").strip("review_") for element in review_list if "ore" in element.find('div',{'class':'entry'}).find("p").getText().strip().replace('\n\n','').replace('  ','')[-3:]]),
+										'servlet':'Hotel_Review',
+										'expand':'2'}
+									
+									rev_payload = {
+										'gac':'Reviews',
+										'gaa':'expand',
+										'gass':'Hotel_Review',
+										'gasl':hotelId,
+										'gapu':self.headers['X-Puid'],
+										'gams':'0',}
+									full_review_url = self.baseurl+"/ExpandedUserReviews-g"+details['geoId']+"-d"+hotelId
+									full_review = self.s.post(full_review_url, params = arg4, data = rev_payload)
+									full_review = full_review.text
+									full_reviewText = BeautifulSoup(full_review).find("div",{"class":"entry"}).find("p").getText().strip().replace("\n\n"," ").replace("  ","")
+									reviewText = full_reviewText
+							except Exception as e:
 								reviewText = ''
 							try:
 								score = float(re.search('(\\d+(\\.\\d+)?)', review.find('span',{'class':'rate sprite-rating_s rating_s'}).find('img').get('alt').strip().replace(',','').replace('  ','')).group(1))
 							except:
 								score = 0
 							reviews.append({'review_date':review_date,'username':username,'userRanking':userRanking,'userReviewCount':userReviewCount,'reviewText':reviewText,'score':score,})
+							reviewText=""
+							review_date=""
+							score=0
+							userRanking=""
+							userReviewCount=0
+							username=""
+					else:
+						print "review tab not found on page "
+						print all_page[str(pageCount)]
+						print response
 					pageCount += 1
-				except:
-					# print ": main block excepted"
+				except Exception as e:
+					print "main block excepted"
+					print str(e)
 					pageCount += 1
 					continue
 			result = {
