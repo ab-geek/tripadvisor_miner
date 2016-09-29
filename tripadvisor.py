@@ -210,6 +210,9 @@ class TripAdvisor:
 	
 	def make_hotel_json(self, hotel_details_per_page):
 		for hotelId, details in hotel_details_per_page.iteritems():
+			print hotelId
+		return
+		if 1==1:
 			hotelTripadvisorId = ""
 			hotelName = ""
 			hotelEmail = ""
@@ -256,234 +259,234 @@ class TripAdvisor:
 			hotelName = details['hotelName']
 			# if hotelId == '1950138':
 			response = BeautifulSoup(self.s.get(details['url'], headers = self.headers).text,'lxml')
-			address = response.find('address')
-			# print address
-			email = address.find('div',{'class': 'ui_icon email fl icnLink'})
-			if email:
-				span = email.findNext('div',{'class':'fl'})
-				if span:
-					span = span.find('span',{'class':'taLnk hvrIE6'})
-					if span:
-						span = span.get('onclick')
-						re1 = '(showEmailHotelOverlay\\()'
-						re2 = '(\\d+)' #hotel id
-						re3 = '(\\s*,\\s*)' #seperator
-						re4 = '(\\\'.*?\\\')' #True or False
-						re5 = re3 #seperator
-						re6 = re4 #single quote string
-						re7 = re3 #seperator
-						re8 = re4 #single quote string
-						re9 = '(\\))'
-						rg = re.compile(re1+re2+re3+re4+re5+re6+re7+re8+re9,re.IGNORECASE|re.DOTALL)
-						m = rg.search(span)
-						if m:
-							if m.group(4) == "'false'":
-								isOfferEmail = False
-							else:
-								isOfferEmail = True
-							if m.group(6) == "''":
-								overrideOfferEmail = None
-							else:
-								overrideOfferEmail = m.group(6)[1:-1]
-							if m.group(8) == "''":
-								contactColumn = None
-							else:
-								contactColumn = int(m.group(8)[1:-1])
+			# address = response.find('address')
+			# # print address
+			# email = address.find('div',{'class': 'ui_icon email fl icnLink'})
+			# if email:
+			# 	span = email.findNext('div',{'class':'fl'})
+			# 	if span:
+			# 		span = span.find('span',{'class':'taLnk hvrIE6'})
+			# 		if span:
+			# 			span = span.get('onclick')
+			# 			re1 = '(showEmailHotelOverlay\\()'
+			# 			re2 = '(\\d+)' #hotel id
+			# 			re3 = '(\\s*,\\s*)' #seperator
+			# 			re4 = '(\\\'.*?\\\')' #True or False
+			# 			re5 = re3 #seperator
+			# 			re6 = re4 #single quote string
+			# 			re7 = re3 #seperator
+			# 			re8 = re4 #single quote string
+			# 			re9 = '(\\))'
+			# 			rg = re.compile(re1+re2+re3+re4+re5+re6+re7+re8+re9,re.IGNORECASE|re.DOTALL)
+			# 			m = rg.search(span)
+			# 			if m:
+			# 				if m.group(4) == "'false'":
+			# 					isOfferEmail = False
+			# 				else:
+			# 					isOfferEmail = True
+			# 				if m.group(6) == "''":
+			# 					overrideOfferEmail = None
+			# 				else:
+			# 					overrideOfferEmail = m.group(6)[1:-1]
+			# 				if m.group(8) == "''":
+			# 					contactColumn = None
+			# 				else:
+			# 					contactColumn = int(m.group(8)[1:-1])
 
-						args = {
-							'detail':hotelId,
-							'isOfferEmail':isOfferEmail,
-							'overrideOfferEmail':overrideOfferEmail,
-							'contactColumn':contactColumn
-						}
-						email = BeautifulSoup(self.s.get("https://www.tripadvisor.com/EmailHotel",params = args).text).find('input',{'name':'overrideOfferEmail'})
-						if email:
-							email = email.get('value')
-							hotelEmail = email
-			# if address.find('span', {'property': 'streetAddress'}):
-			# 	strAddress = address.find('span', {'property': 'streetAddress'}).getText()
+			# 			args = {
+			# 				'detail':hotelId,
+			# 				'isOfferEmail':isOfferEmail,
+			# 				'overrideOfferEmail':overrideOfferEmail,
+			# 				'contactColumn':contactColumn
+			# 			}
+			# 			email = BeautifulSoup(self.s.get("https://www.tripadvisor.com/EmailHotel",params = args).text).find('input',{'name':'overrideOfferEmail'})
+			# 			if email:
+			# 				email = email.get('value')
+			# 				hotelEmail = email
+			# # if address.find('span', {'property': 'streetAddress'}):
+			# # 	strAddress = address.find('span', {'property': 'streetAddress'}).getText()
+			# # 	if strAddress:
+			# # 		# streetAddress = strAddress.encode('utf-8')
+			# # 		streetAddress = strAddress
+			# if address.find('span', {'class': 'format_address'}):
+			# 	strAddress = address.find('span', {'class': 'format_address'}).getText()
 			# 	if strAddress:
 			# 		# streetAddress = strAddress.encode('utf-8')
 			# 		streetAddress = strAddress
-			if address.find('span', {'class': 'format_address'}):
-				strAddress = address.find('span', {'class': 'format_address'}).getText()
-				if strAddress:
-					# streetAddress = strAddress.encode('utf-8')
-					streetAddress = strAddress
-			if address.find('span',{'property': 'addressCountry'}):
-				if address.find('span',{'property': 'addressCountry'}).get('content'):
-					country = address.find('span',{'property': 'addressCountry'}).get('content')
-			if address.find('span',{'property': 'addressLocality'}):
-				if address.find('span',{'property': 'addressLocality'}).getText():
-					# city = address.find('span',{'property': 'addressLocality'}).getText().encode('utf-8')
-					city = address.find('span',{'property': 'addressLocality'}).getText()
-			if address.find('span',{'property': 'addressRegion'}):
-				if address.find('span',{'property': 'addressRegion'}).getText():
-					# state = address.find('span',{'property': 'addressRegion'}).getText().encode('utf-8')
-					state = address.find('span',{'property': 'addressRegion'}).getText()
-			self.headers['Referer'] = details['url']
-			payload = {
-				'interleaved':True,
-				'geoPages':True,
-				'details':True,
-				'types':'hotel',
-				'link_type':'geo',
-				'neighborhood_geos':True,
-				'matchTags':True,
-				'matchGlobalTags':True,
-				'matchKeywords':True,
-				'strictAnd':True,
-				'hglt':True,
-				'disableMaxGroupSize':True,
-				'max':'6',
-				'allowPageInsertionOnGeoMatch':False,
-				'defaultListInsertionType':'hotel',
-				'scopeFilter':'global',
-				'injectNeighborhoods':False,
-				'injectNewLocation':True,
-				'injectLists':True,
-				'nearby':True,
-				'local':True,
-				'parentids':details['geoId'],
-				'query':details['hotelName'],
-				'action':'API',
-				'uiOrigin':'MASTHEAD',
-				'source':'MASTHEAD',
-				'startTime':str(int(time.time()*1000)),
-				'searchSessionId':details['searchSessionId'],
-			}
-			print "retriving coordinate"
-			coord_response = None
-			try:
-				coord_response = self.s.get(self.baseurl+'TypeAheadJson', params=payload, headers = self.headers).json()['results'][0]['coords']
-			except:
-				pass
-			if coord_response:
-				coord_response = coord_response.split(',')
-				latitude = float(coord_response[0])
-				longitude = float(coord_response[1])
-			print "retriving properties"
-			if response.find('a',{'property': 'reviewCount'}):
-				reviewCount = response.find('a',{'property': 'reviewCount'}).get('content')
-				if reviewCount:
-					reviewCount = int(reviewCount)
+			# if address.find('span',{'property': 'addressCountry'}):
+			# 	if address.find('span',{'property': 'addressCountry'}).get('content'):
+			# 		country = address.find('span',{'property': 'addressCountry'}).get('content')
+			# if address.find('span',{'property': 'addressLocality'}):
+			# 	if address.find('span',{'property': 'addressLocality'}).getText():
+			# 		# city = address.find('span',{'property': 'addressLocality'}).getText().encode('utf-8')
+			# 		city = address.find('span',{'property': 'addressLocality'}).getText()
+			# if address.find('span',{'property': 'addressRegion'}):
+			# 	if address.find('span',{'property': 'addressRegion'}).getText():
+			# 		# state = address.find('span',{'property': 'addressRegion'}).getText().encode('utf-8')
+			# 		state = address.find('span',{'property': 'addressRegion'}).getText()
+			# self.headers['Referer'] = details['url']
+			# payload = {
+			# 	'interleaved':True,
+			# 	'geoPages':True,
+			# 	'details':True,
+			# 	'types':'hotel',
+			# 	'link_type':'geo',
+			# 	'neighborhood_geos':True,
+			# 	'matchTags':True,
+			# 	'matchGlobalTags':True,
+			# 	'matchKeywords':True,
+			# 	'strictAnd':True,
+			# 	'hglt':True,
+			# 	'disableMaxGroupSize':True,
+			# 	'max':'6',
+			# 	'allowPageInsertionOnGeoMatch':False,
+			# 	'defaultListInsertionType':'hotel',
+			# 	'scopeFilter':'global',
+			# 	'injectNeighborhoods':False,
+			# 	'injectNewLocation':True,
+			# 	'injectLists':True,
+			# 	'nearby':True,
+			# 	'local':True,
+			# 	'parentids':details['geoId'],
+			# 	'query':details['hotelName'],
+			# 	'action':'API',
+			# 	'uiOrigin':'MASTHEAD',
+			# 	'source':'MASTHEAD',
+			# 	'startTime':str(int(time.time()*1000)),
+			# 	'searchSessionId':details['searchSessionId'],
+			# }
+			# print "retriving coordinate"
+			# coord_response = None
+			# try:
+			# 	coord_response = self.s.get(self.baseurl+'TypeAheadJson', params=payload, headers = self.headers).json()['results'][0]['coords']
+			# except:
+			# 	pass
+			# if coord_response:
+			# 	coord_response = coord_response.split(',')
+			# 	latitude = float(coord_response[0])
+			# 	longitude = float(coord_response[1])
+			# print "retriving properties"
+			# if response.find('a',{'property': 'reviewCount'}):
+			# 	reviewCount = response.find('a',{'property': 'reviewCount'}).get('content')
+			# 	if reviewCount:
+			# 		reviewCount = int(reviewCount)
 
-			if response.find('img',{'class':re.compile('rating')}):
-				if response.find('img',{'class':re.compile('rating')}).get('alt'):
-					tripAdvisorRating = response.find('img',{'class':re.compile('rating')}).get('alt').split()[0]
-					if tripAdvisorRating:
-						tripAdvisorRating = float(tripAdvisorRating)
-			if response.find('div',{'class':'popRanking popIndexValidation rank_text wrap'}):
-				if response.find('div',{'class':'popRanking popIndexValidation rank_text wrap'}).getText():
-					text = response.find('div',{'class':'popRanking popIndexValidation rank_text wrap'}).getText()
-					# if text:
-					# 	rankingInCity = text.replace('\n','')
-					re1 = '([0-9 ]+(\\W)?[0-9 ]*)'
-					re2 = '(\\s+(?:[a-z][a-z]+)\\s+)'
-					re3 = '([0-9 ]+(\\W)?[0-9 ]*)'
-					rg = re.compile(re1+re2+re3,re.IGNORECASE|re.DOTALL|re.U)
-					m = rg.search(text)
-					if m:
-						rankingInCity = m.group(1)+'/'+m.group(4)
+			# if response.find('img',{'class':re.compile('rating')}):
+			# 	if response.find('img',{'class':re.compile('rating')}).get('alt'):
+			# 		tripAdvisorRating = response.find('img',{'class':re.compile('rating')}).get('alt').split()[0]
+			# 		if tripAdvisorRating:
+			# 			tripAdvisorRating = float(tripAdvisorRating)
+			# if response.find('div',{'class':'popRanking popIndexValidation rank_text wrap'}):
+			# 	if response.find('div',{'class':'popRanking popIndexValidation rank_text wrap'}).getText():
+			# 		text = response.find('div',{'class':'popRanking popIndexValidation rank_text wrap'}).getText()
+			# 		# if text:
+			# 		# 	rankingInCity = text.replace('\n','')
+			# 		re1 = '([0-9 ]+(\\W)?[0-9 ]*)'
+			# 		re2 = '(\\s+(?:[a-z][a-z]+)\\s+)'
+			# 		re3 = '([0-9 ]+(\\W)?[0-9 ]*)'
+			# 		rg = re.compile(re1+re2+re3,re.IGNORECASE|re.DOTALL|re.U)
+			# 		m = rg.search(text)
+			# 		if m:
+			# 			rankingInCity = m.group(1)+'/'+m.group(4)
 			
-			if response.find('div',{'id':'AMENITIES_TAB'}):
-				aminities_tab = response.find('div',{'id':'AMENITIES_TAB'})
-				if aminities_tab.find('div',{'class':'additional_info tabs_description off'}):
-					span = aminities_tab.find('div',{'class':'additional_info tabs_description off'}).find('span',{'class':'tabs_descriptive_text'})
-					if span:
-						if span.getText():
-							# officialHotelDescription = span.getText().encode('utf-8')
-							officialHotelDescription = span.getText().strip()
-				if aminities_tab.find('div',{'class':'additional_info_amenities'}):
-					span = aminities_tab.find('div',{'class':'additional_info_amenities'}).find('div',{'class':'content'})
-					if span:
-						span = span.getText()
-						if span:
-							# additionalHotelInformation = span.replace('\n\n','\n').encode('utf-8')
-							additionalHotelInformation = span.replace('\n\n','\n').strip()
-				try:
-					all_highlights = aminities_tab.find('div',{'class':'amenity_hdr highlights'}).findNext('div',{'class':'property_tags_wrap'}).findAll('li')
-					# amenities['highlights'] = [element.getText().replace("  "," ").replace('\n','').encode('utf-8') for element in all_highlights]
-					amenities['highlights'] = [element.getText().replace("  "," ").replace('\n','').strip() for element in all_highlights]
-				except:
-					pass
-				try:
-					# amenities['aboutTheProperty'] = [element.getText().replace('\n','').replace('  ',' ').encode('utf-8') for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('About the property')).findNext('div').findAll('li')]
-					amenities['aboutTheProperty'] = [element.getText().replace('\n','').replace('  ',' ').strip() for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('About the property')).findNext('div').findAll('li')]
-				except:
-					pass
-				try:
-					# amenities['thingsToDo'] = [element.getText().replace('\n','').replace('  ',' ').encode('utf-8') for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Things to do')).findNext('div').findAll('li')]
-					amenities['thingsToDo'] = [element.getText().replace('\n','').replace('  ',' ').strip() for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Things to do')).findNext('div').findAll('li')]
-				except:
-					pass
-				try:
-					# amenities['roomTypes'] = [element.getText().replace('\n','').replace('  ',' ').encode('utf-8') for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Room types')).findNext('div').findAll('li')]
-					amenities['roomTypes'] = [element.getText().replace('\n','').replace('  ',' ').strip() for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Room types')).findNext('div').findAll('li')]
-				except:
-					pass
-				try:
-					# amenities['internet'] = [element.getText().replace('\n','').replace('  ',' ').encode('utf-8') for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Internet')).findNext('div').findAll('li')]
-					amenities['internet'] = [element.getText().replace('\n','').replace('  ',' ').strip() for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Internet')).findNext('div').findAll('li')]
-				except:
-					pass
-				try:
-					# amenities['services'] = [element.getText().replace('\n','').replace('  ',' ').encode('utf-8') for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Services')).findNext('div').findAll('li')]
-					amenities['services'] = [element.getText().replace('\n','').replace('  ',' ').strip() for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Services')).findNext('div').findAll('li')]
-				except:
-					pass
-			print "retriving images"
-			if response.find('div',{'id':'PHOTOS_TAB'}):
-				photo_tab = response.find('div',{'id':'PHOTOS_TAB'})
-				if response.find('div',{'class':'albumGroup managementPhotos '}):
-					all_photo_url = self.baseurl + "LocationPhotoAlbum"
-					args = {
-						'detail':hotelId,
-						'geo':details['geoId'],
-						'filter':1,
-						'albumId':101,
-						'heroMinWidth':1311,
-						'heroMinHeight':338,
-						'albumid':101,
-						'albumViewMode':'images',
-						'albumPartialsToUpdate':'full',
-						'extraAlbumCoverCount':4,
-						'area':'QC_Meta_Mini|Photo_Lightbox',
-						'metaReferer':'Hotel_Review',
-						'metaRequestTiming':int(time.time()*1000),
-						}
-					# print "first argument passed ", args
-					# print "headers", self.headers
-					self.headers.pop('Upgrade-Insecure-Requests', None)
-					photo_response = BeautifulSoup(self.s.get(all_photo_url,headers = self.headers,params = args).text)
-					if photo_response:
-						photo_response = photo_response.findAll('div',{'class':"albumGridItem"})
-						for element in photo_response:
-							url = element.find('img',{"src":re.compile('media-cdn.tripadvisor.com')})
-							if url:
-								url = url.get('src')
-								args2 = dict([element2.split('=') for element2 in element.find('a').get('data-href').split('&')])
-								args2['placementName'] = 'media_albums'
-								args2['servletClass'] = 'com.TripResearch.servlet.LocationPhotoAlbum'
-								args2['servletName'] = 'LocationPhotoAlbum'
-								args2['albumPartialsToUpdate'] = 'partial'
-								args2['heroMinWidth'] = '974'
-								args2['heroMinHeight'] = '306'
-								try:
-									single_image_response = BeautifulSoup(self.s.post(self.baseurl+"MetaPlacementAjax",data=args2,headers=self.headers).text)
-								except:
-									pass
-								try:
-									caption = single_image_response.find('div',{'class':'captionText'}).getText().replace("\n",'').split('"')[-2]
-								except:
-									caption = ''
-								try:
-									date = single_image_response.find('div',{'class':'captionText'}).getText().replace("\n",'').split('"')[-1]
-								except:
-									date = ''
-								images.append({'url':url,'caption':caption,'date':date})
-							else:
-								continue
+			# if response.find('div',{'id':'AMENITIES_TAB'}):
+			# 	aminities_tab = response.find('div',{'id':'AMENITIES_TAB'})
+			# 	if aminities_tab.find('div',{'class':'additional_info tabs_description off'}):
+			# 		span = aminities_tab.find('div',{'class':'additional_info tabs_description off'}).find('span',{'class':'tabs_descriptive_text'})
+			# 		if span:
+			# 			if span.getText():
+			# 				# officialHotelDescription = span.getText().encode('utf-8')
+			# 				officialHotelDescription = span.getText().strip()
+			# 	if aminities_tab.find('div',{'class':'additional_info_amenities'}):
+			# 		span = aminities_tab.find('div',{'class':'additional_info_amenities'}).find('div',{'class':'content'})
+			# 		if span:
+			# 			span = span.getText()
+			# 			if span:
+			# 				# additionalHotelInformation = span.replace('\n\n','\n').encode('utf-8')
+			# 				additionalHotelInformation = span.replace('\n\n','\n').strip()
+			# 	try:
+			# 		all_highlights = aminities_tab.find('div',{'class':'amenity_hdr highlights'}).findNext('div',{'class':'property_tags_wrap'}).findAll('li')
+			# 		# amenities['highlights'] = [element.getText().replace("  "," ").replace('\n','').encode('utf-8') for element in all_highlights]
+			# 		amenities['highlights'] = [element.getText().replace("  "," ").replace('\n','').strip() for element in all_highlights]
+			# 	except:
+			# 		pass
+			# 	try:
+			# 		# amenities['aboutTheProperty'] = [element.getText().replace('\n','').replace('  ',' ').encode('utf-8') for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('About the property')).findNext('div').findAll('li')]
+			# 		amenities['aboutTheProperty'] = [element.getText().replace('\n','').replace('  ',' ').strip() for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('About the property')).findNext('div').findAll('li')]
+			# 	except:
+			# 		pass
+			# 	try:
+			# 		# amenities['thingsToDo'] = [element.getText().replace('\n','').replace('  ',' ').encode('utf-8') for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Things to do')).findNext('div').findAll('li')]
+			# 		amenities['thingsToDo'] = [element.getText().replace('\n','').replace('  ',' ').strip() for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Things to do')).findNext('div').findAll('li')]
+			# 	except:
+			# 		pass
+			# 	try:
+			# 		# amenities['roomTypes'] = [element.getText().replace('\n','').replace('  ',' ').encode('utf-8') for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Room types')).findNext('div').findAll('li')]
+			# 		amenities['roomTypes'] = [element.getText().replace('\n','').replace('  ',' ').strip() for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Room types')).findNext('div').findAll('li')]
+			# 	except:
+			# 		pass
+			# 	try:
+			# 		# amenities['internet'] = [element.getText().replace('\n','').replace('  ',' ').encode('utf-8') for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Internet')).findNext('div').findAll('li')]
+			# 		amenities['internet'] = [element.getText().replace('\n','').replace('  ',' ').strip() for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Internet')).findNext('div').findAll('li')]
+			# 	except:
+			# 		pass
+			# 	try:
+			# 		# amenities['services'] = [element.getText().replace('\n','').replace('  ',' ').encode('utf-8') for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Services')).findNext('div').findAll('li')]
+			# 		amenities['services'] = [element.getText().replace('\n','').replace('  ',' ').strip() for element in aminities_tab.find('div',{'class':'amenity_hdr'},text=re.compile('Services')).findNext('div').findAll('li')]
+			# 	except:
+			# 		pass
+			# print "retriving images"
+			# if response.find('div',{'id':'PHOTOS_TAB'}):
+			# 	photo_tab = response.find('div',{'id':'PHOTOS_TAB'})
+			# 	if response.find('div',{'class':'albumGroup managementPhotos '}):
+			# 		all_photo_url = self.baseurl + "LocationPhotoAlbum"
+			# 		args = {
+			# 			'detail':hotelId,
+			# 			'geo':details['geoId'],
+			# 			'filter':1,
+			# 			'albumId':101,
+			# 			'heroMinWidth':1311,
+			# 			'heroMinHeight':338,
+			# 			'albumid':101,
+			# 			'albumViewMode':'images',
+			# 			'albumPartialsToUpdate':'full',
+			# 			'extraAlbumCoverCount':4,
+			# 			'area':'QC_Meta_Mini|Photo_Lightbox',
+			# 			'metaReferer':'Hotel_Review',
+			# 			'metaRequestTiming':int(time.time()*1000),
+			# 			}
+			# 		# print "first argument passed ", args
+			# 		# print "headers", self.headers
+			# 		self.headers.pop('Upgrade-Insecure-Requests', None)
+			# 		photo_response = BeautifulSoup(self.s.get(all_photo_url,headers = self.headers,params = args).text)
+			# 		if photo_response:
+			# 			photo_response = photo_response.findAll('div',{'class':"albumGridItem"})
+			# 			for element in photo_response:
+			# 				url = element.find('img',{"src":re.compile('media-cdn.tripadvisor.com')})
+			# 				if url:
+			# 					url = url.get('src')
+			# 					args2 = dict([element2.split('=') for element2 in element.find('a').get('data-href').split('&')])
+			# 					args2['placementName'] = 'media_albums'
+			# 					args2['servletClass'] = 'com.TripResearch.servlet.LocationPhotoAlbum'
+			# 					args2['servletName'] = 'LocationPhotoAlbum'
+			# 					args2['albumPartialsToUpdate'] = 'partial'
+			# 					args2['heroMinWidth'] = '974'
+			# 					args2['heroMinHeight'] = '306'
+			# 					try:
+			# 						single_image_response = BeautifulSoup(self.s.post(self.baseurl+"MetaPlacementAjax",data=args2,headers=self.headers).text)
+			# 					except:
+			# 						pass
+			# 					try:
+			# 						caption = single_image_response.find('div',{'class':'captionText'}).getText().replace("\n",'').split('"')[-2]
+			# 					except:
+			# 						caption = ''
+			# 					try:
+			# 						date = single_image_response.find('div',{'class':'captionText'}).getText().replace("\n",'').split('"')[-1]
+			# 					except:
+			# 						date = ''
+			# 					images.append({'url':url,'caption':caption,'date':date})
+			# 				else:
+			# 					continue
 			print "retriving reviews"
 			if response.find('form',{'action':'/SetReviewFilter#REVIEWS'}):
 				if response.find('div',{'class':'ui_tagcloud_group easyClear'}):
@@ -502,6 +505,7 @@ class TripAdvisor:
 				all_page = dict([(element.get('data-page-number'),self.baseurl+element.get('href')[1:]) for element in response.find('div',{'class':'pageNumbers'}).findAll('a')])
 			except:
 				pass
+			last_page = 1 #Remove this
 			while (pageCount <= last_page):
 				if ((pageCount > 1) and (str(pageCount) not in all_page.keys())):
 					new_page_url=None
@@ -621,23 +625,23 @@ class TripAdvisor:
 					pageCount += 1
 					continue
 			result = {
-						'hotelTripadvisorId':hotelTripadvisorId,
-						'hotelName': hotelName,
-						'hotelEmail':hotelEmail,
-						'streetAddress': streetAddress,
-						'country': country,
-						'city': city,
-						'state': state,
-						'longitude': longitude,
-						'latitude': latitude,
-						'tripAdvisorRating':tripAdvisorRating,
-						'reviewCount':reviewCount,
-						'rankingInCity':rankingInCity,
-						'hotelTagCloud':hotelTagCloud,
-						'officialHotelDescription':officialHotelDescription,
-						'additionalHotelInformation':additionalHotelInformation,
-						'amenities':amenities,
-						'images':images,
+						# 'hotelTripadvisorId':hotelTripadvisorId,
+						# 'hotelName': hotelName,
+						# 'hotelEmail':hotelEmail,
+						# 'streetAddress': streetAddress,
+						# 'country': country,
+						# 'city': city,
+						# 'state': state,
+						# 'longitude': longitude,
+						# 'latitude': latitude,
+						# 'tripAdvisorRating':tripAdvisorRating,
+						# 'reviewCount':reviewCount,
+						# 'rankingInCity':rankingInCity,
+						# 'hotelTagCloud':hotelTagCloud,
+						# 'officialHotelDescription':officialHotelDescription,
+						# 'additionalHotelInformation':additionalHotelInformation,
+						# 'amenities':amenities,
+						# 'images':images,
 						'reviews':reviews,
 						}
 			new_file_name = details['language']+'-'+details['location']+'-'+hotelId+'.json'
