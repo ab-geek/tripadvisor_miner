@@ -320,6 +320,8 @@ class TripAdvisor:
 			if address.find('span',{'property': 'addressCountry'}):
 				if address.find('span',{'property': 'addressCountry'}).get('content'):
 					country = address.find('span',{'property': 'addressCountry'}).get('content')
+				else:
+					country = address.find('span',{'property': 'addressCountry'}).getText().replace("  ","").replace("\n","").strip()
 			if address.find('span',{'property': 'addressLocality'}):
 				if address.find('span',{'property': 'addressLocality'}).getText():
 					# city = address.find('span',{'property': 'addressLocality'}).getText().encode('utf-8')
