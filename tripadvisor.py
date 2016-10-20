@@ -12,9 +12,155 @@ import time
 import hashlib
 import random
 import re
+import traceback
 
 class TripAdvisor:
-	
+	debug = True
+	def typeahead_fail(self,location):
+		s2 = requests.Session()
+		headers = {
+				'Accept': "text/javascript, text/html, application/xml, text/xml, */*",
+				'Accept-Encoding': "gzip, deflate, sdch",
+				'Connection':'keep-alive',
+				'Host':'www.tripadvisor.com',
+				'Referer':'https://www.tripadvisor.com',
+				'User-Agent': "Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/49.0.2623.87 Chrome/49.0.2623.87 Safari/537.36",
+				'X-Requested-With': 'XMLHttpRequest'
+				}
+		try:
+			response = s2.get('https://www.tripadvisor.com').text
+		except:
+			print "cant retrive the base url"
+			return
+		re1='(\')'	# Any Single Character 1
+		re2='(typeahead)'	# Word 1
+		re3='(\\.)'	# Any Single Character 2
+		re4='(searchSessionId)'	# Word 2
+		re5='(\')'	# Any Single Character 3
+		re6='(,)'	# Any Single Character 4
+		re7='( )'	# White Space 1
+		re8='(\')'	# Any Single Character 5
+		re9='([^\']+?)'	# Anything ecvept inverted comma
+		re10='(\')'	# Any Single Character 7
+		re11='(\\))'	# Any Single Character 8
+		re12='(;)'	# Any Single Character 9
+
+		rg = re.compile(re1+re2+re3+re4+re5+re6+re7+re8+re9+re10+re11+re12,re.IGNORECASE|re.DOTALL)
+		m = rg.search(response)
+
+		searchSessionId = "no_search_session_id"
+		if m:
+			searchSessionId=m.group(9)
+
+		re1='(ta\\.uid)'	# Fully Qualified Domain Name 1
+		re2='( )'	# White Space 1
+		re3='(=)'	# Any Single Character 1
+		re4='( )'	# White Space 2
+		re5='(\')'	# Any Single Character 2
+		re6='([^\']+?)'
+		re7='(\')'	# Any Single Character 3
+		re8='(;)'	# Any Single Character 4
+
+		gapu = None
+		rg = re.compile(re1+re2+re3+re4+re5+re6+re7+re8,re.IGNORECASE|re.DOTALL)
+		m = rg.search(response)
+		if m:
+			gapu=m.group(6)
+
+		if gapu:
+			headers['X-Puid'] = gapu
+
+		args = {
+			'gac':'TopNav_geo_search',
+			'gaa': 'focus',
+			'gal':None,
+			'gav':0,
+			'gani':False,
+			'gass':'Home',
+			'gapu':gapu,
+			'gams':0,
+
+		}
+		garecord = "https://www.tripadvisor.com/" + "GARecord"
+		try:
+			response = s2.get(garecord, params = args, headers = headers)
+		except:
+			print "garecord request failed"
+			pass
+		typeahead_url = "https://www.tripadvisor.com/"+"TypeAheadJson"
+		args = {
+			'action': "RECORD",
+			'eventType':'start',
+			'uiOrigin':'unknown',
+			'startTime':str(int(time.time()*1000)),
+			'source':'unknown',
+			'global':True,
+			'searchSessionId':searchSessionId
+		}
+		try:
+			response = s2.get(typeahead_url, params = args, headers = headers)
+		except:
+			print "typeahead fail"
+			pass
+		payload = {
+			'neighborhood_geos': True,
+			'max': '6', 
+			'uiOrigin': 'GEOSCOPE',
+			'startTime': str(int(time.time()*1000)),
+			'searchSessionId': searchSessionId,
+			'query': location,
+			'types': "geo,theme_park,air",
+			'hglt': True,
+			'source': 'GEOSCOPE',
+			'interleaved': True,
+			'action': 'API',
+			'link_type': 'hotel',
+			'details': True,
+		}
+		try:
+			response = s2.get(typeahead_url, params=payload, headers = headers)
+			url = response.json()
+			return url
+		except:
+			print "second typeahead twice failed"
+			return None
+
+	def get_searchSessionId(self,response):
+		re1='(\')'	# Any Single Character 1
+		re2='(typeahead)'	# Word 1
+		re3='(\\.)'	# Any Single Character 2
+		re4='(searchSessionId)'	# Word 2
+		re5='(\')'	# Any Single Character 3
+		re6='(,)'	# Any Single Character 4
+		re7='( )'	# White Space 1
+		re8='(\')'	# Any Single Character 5
+		re9='([^\']+?)'	# Anything ecvept inverted comma
+		re10='(\')'	# Any Single Character 7
+		re11='(\\))'	# Any Single Character 8
+		re12='(;)'	# Any Single Character 9
+
+		rg = re.compile(re1+re2+re3+re4+re5+re6+re7+re8+re9+re10+re11+re12,re.IGNORECASE|re.DOTALL)
+		m = rg.search(response)
+		if m:
+			return m.group(9)
+		return "no_search_session_id"
+
+	def get_gapu(self,response):
+		re1='(ta\\.uid)'	# Fully Qualified Domain Name 1
+		re2='( )'	# White Space 1
+		re3='(=)'	# Any Single Character 1
+		re4='( )'	# White Space 2
+		re5='(\')'	# Any Single Character 2
+		re6='([^\']+?)'
+		re7='(\')'	# Any Single Character 3
+		re8='(;)'	# Any Single Character 4
+
+		rg = re.compile(re1+re2+re3+re4+re5+re6+re7+re8,re.IGNORECASE|re.DOTALL)
+		m = rg.search(response)
+		if m:
+			return m.group(6)
+		return None
+
 	def scrape(self, location, lang='en'):
 		self.baseurl = None
 		#disable warnings
@@ -31,6 +177,7 @@ class TripAdvisor:
 				'Accept-Encoding': "gzip, deflate, sdch",
 				'Connection':'keep-alive',
 				'Host':self.baseurl[8:],
+				'Origin':self.baseurl,
 				'Referer':self.baseurl,
 				'User-Agent': "Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/49.0.2623.87 Chrome/49.0.2623.87 Safari/537.36",
 				'X-Requested-With': 'XMLHttpRequest'
@@ -40,40 +187,8 @@ class TripAdvisor:
 			except:
 				print "cant retrive the base url"
 				return
-			re1='(\')'	# Any Single Character 1
-			re2='(typeahead)'	# Word 1
-			re3='(\\.)'	# Any Single Character 2
-			re4='(searchSessionId)'	# Word 2
-			re5='(\')'	# Any Single Character 3
-			re6='(,)'	# Any Single Character 4
-			re7='( )'	# White Space 1
-			re8='(\')'	# Any Single Character 5
-			re9='([^\']+?)'	# Anything ecvept inverted comma
-			re10='(\')'	# Any Single Character 7
-			re11='(\\))'	# Any Single Character 8
-			re12='(;)'	# Any Single Character 9
-
-			rg = re.compile(re1+re2+re3+re4+re5+re6+re7+re8+re9+re10+re11+re12,re.IGNORECASE|re.DOTALL)
-			m = rg.search(response)
-
-			searchSessionId = "no_search_session_id"
-			if m:
-				searchSessionId=m.group(9)
-
-			re1='(ta\\.uid)'	# Fully Qualified Domain Name 1
-			re2='( )'	# White Space 1
-			re3='(=)'	# Any Single Character 1
-			re4='( )'	# White Space 2
-			re5='(\')'	# Any Single Character 2
-			re6='([^\']+?)'
-			re7='(\')'	# Any Single Character 3
-			re8='(;)'	# Any Single Character 4
-
-			gapu = None
-			rg = re.compile(re1+re2+re3+re4+re5+re6+re7+re8,re.IGNORECASE|re.DOTALL)
-			m = rg.search(response)
-			if m:
-				gapu=m.group(6)
+			searchSessionId = self.get_searchSessionId(response)
+			gapu = self.get_gapu(response)
 
 			if gapu:
 				self.headers['X-Puid'] = gapu
@@ -117,37 +232,42 @@ class TripAdvisor:
 				'startTime': str(int(time.time()*1000)),
 				'searchSessionId': searchSessionId,
 				'query': location,
-				'types': ['geo', 'theme_park'],
+				'types': "geo,theme_park,air",
 				'hglt': True,
 				'source': 'GEOSCOPE',
 				'interleaved': True,
 				'action': 'API',
 				'link_type': 'hotel',
-				'details': True
+				'details': True,
 			}
 			try:
+				self.headers['Content-type'] = "application/x-www-form-urlencoded; charset=UTF-8"
 				response = self.s.get(typeahead_url, params=payload, headers = self.headers)
 				url = response.json()
-			except:
+			except Exception as e:
 				print "second typeahead fail"
+				url = self.typeahead_fail(location)
 				pass
-			# print url
-			# exit(0)
 			try:
 				url = url["results"][0]["urls"][0]["fallback_url"][1:]
-			except:
+			except Exception as e:
 				print "location not allowed"
+				print str(e)
 				url = None
 			if url:
 				url = self.baseurl+url
-				# print url
+				if self.debug:
+					print url
 				self.headers['Upgrade-Insecure-Requests']= "1"
 				try:
-					response = BeautifulSoup(self.s.get(url,headers=self.headers).text,'lxml')
+					# response = BeautifulSoup(self.s.get(url,headers=self.headers).text,'lxml')
+					response = BeautifulSoup(self.s.get(url).text,'lxml')
 				except Exception as e:
 					print "hotel listing failed, ",str(e)
 					return
-				# print response
+				searchSessionId = self.get_searchSessionId(str(response))
+				gapu = self.get_gapu(str(response))
+				self.headers["X-Puid"] = gapu
 				last_page = 1
 				try:
 					last_page = response.find('div',{'class':'pageNumbers'}).find('a',{'class':'pageNum last taLnk'}).get('data-page-number')
@@ -157,8 +277,10 @@ class TripAdvisor:
 				pageCount = 1
 				try:
 					all_page = dict([(element.get('data-page-number'),self.baseurl+element.get('href')[1:]) for element in response.find('div',{'class':'pageNumbers'}).findAll('a')])
-				except:
+				except Exception as e:
 					print "all page url not found"
+					print str(e)
+					print traceback.format_exc()
 					pass
 				while (pageCount <= last_page):
 					hotel_details_per_page = {}
@@ -177,6 +299,7 @@ class TripAdvisor:
 							response = BeautifulSoup(self.s.get(all_page[str(pageCount)],headers=self.headers).text,'lxml')
 						except Exception as e:
 							print "second page onwards not scrapable because", str(e)
+							print response.encode('utf-8')
 							pageCount += 1
 							continue
 					try:
@@ -262,7 +385,10 @@ class TripAdvisor:
 			hotelTripadvisorId = hotelId
 			hotelName = details['hotelName']
 			# if hotelId == '1950138':
-			response = BeautifulSoup(self.s.get(details['url'], headers = self.headers).text,'lxml')
+			# response = BeautifulSoup(self.s.get(details['url'], headers = self.headers).text,'lxml')
+			response = BeautifulSoup(self.s.get(details['url']).text,'lxml')
+			self.headers['X-Puid'] = self.get_gapu(str(response))
+			gapu = self.get_gapu(str(response))
 			address = response.find('address')
 			# print address
 			email = address.find('div',{'class': 'ui_icon email fl icnLink'})
@@ -364,9 +490,11 @@ class TripAdvisor:
 			print "retriving coordinate"
 			coord_response = None
 			try:
-				coord_response = self.s.get(self.baseurl+'TypeAheadJson', params=payload, headers = self.headers).json()['results'][0]['coords']
+				# coord_response = self.s.get(self.baseurl+'TypeAheadJson', params=payload, headers = self.headers).json()['results'][0]['coords']
+				coord_response = self.s.get(self.baseurl+'TypeAheadJson', params=payload).json()['results'][0]['coords']
 			except:
 				print "coord request failed for hotelid ", hotelId
+				# print coord_response.encode('utf-8')
 				pass
 			if coord_response:
 				coord_response = coord_response.split(',')
@@ -379,8 +507,12 @@ class TripAdvisor:
 					reviewCount = int(reviewCount)
 
 			if response.find('img',{'class':re.compile('rating')}):
-				if response.find('img',{'class':re.compile('rating')}).get('alt'):
-					tripAdvisorRating = response.find('img',{'class':re.compile('rating')}).get('alt').split()[0]
+				if response.find('img',{'class':re.compile('rating')}).get('content'):
+					tripAdvisorRating = response.find('img',{'class':re.compile('rating')}).get('content')
+					if tripAdvisorRating:
+						tripAdvisorRating = float(tripAdvisorRating)
+				elif response.find('img',{'class':re.compile('rating')}).get('alt'):
+					tripAdvisorRating = response.find('img',{'class':re.compile('rating')}).get('alt')
 					if tripAdvisorRating:
 						tripAdvisorRating = float(tripAdvisorRating)
 			if response.find('div',{'class':'popRanking popIndexValidation rank_text wrap'}):
@@ -394,7 +526,7 @@ class TripAdvisor:
 					rg = re.compile(re1+re2+re3,re.IGNORECASE|re.DOTALL|re.U)
 					m = rg.search(text)
 					if m:
-						rankingInCity = m.group(1)+'/'+m.group(4).strip()
+						rankingInCity = m.group(1).strip()+'/'+m.group(4).strip()
 			
 			if response.find('div',{'id':'AMENITIES_TAB'}):
 				aminities_tab = response.find('div',{'id':'AMENITIES_TAB'})
@@ -471,7 +603,8 @@ class TripAdvisor:
 					# print "first argument passed ", args
 					# print "headers", self.headers
 					self.headers.pop('Upgrade-Insecure-Requests', None)
-					photo_response = BeautifulSoup(self.s.get(all_photo_url,headers = self.headers,params = args).text)
+					# photo_response = BeautifulSoup(self.s.get(all_photo_url,headers = self.headers,params = args).text)
+					photo_response = BeautifulSoup(self.s.get(all_photo_url,params = args).text)
 					if photo_response:
 						photo_response = photo_response.findAll('div',{'class':"albumGridItem"})
 						for element in photo_response:
@@ -486,7 +619,8 @@ class TripAdvisor:
 								args2['heroMinWidth'] = '974'
 								args2['heroMinHeight'] = '306'
 								try:
-									single_image_response = BeautifulSoup(self.s.post(self.baseurl+"MetaPlacementAjax",data=args2,headers=self.headers).text)
+									# single_image_response = BeautifulSoup(self.s.post(self.baseurl+"MetaPlacementAjax",data=args2,headers=self.headers).text)
+									single_image_response = BeautifulSoup(self.s.post(self.baseurl+"MetaPlacementAjax",data=args2).text)
 								except:
 									# print "caption not retrived"
 									pass
@@ -521,6 +655,7 @@ class TripAdvisor:
 				all_page = dict([(element.get('data-page-number'),self.baseurl+element.get('href')[1:]) for element in response.find('div',{'class':'pageNumbers'}).findAll('a')])
 			except:
 				pass
+
 			while (pageCount <= last_page):
 				if ((pageCount > 1) and (str(pageCount) not in all_page.keys())):
 					new_page_url=None
@@ -536,7 +671,8 @@ class TripAdvisor:
 						continue
 				if pageCount > 1:
 					try:
-						response = BeautifulSoup(self.s.get(all_page[str(pageCount)],headers=self.headers).text,'lxml')
+						# response = BeautifulSoup(self.s.get(all_page[str(pageCount)],headers=self.headers).text,'lxml')
+						response = BeautifulSoup(self.s.get(all_page[str(pageCount)]).text,'lxml')
 					except:
 						print "could not retrive reviews from"
 						print all_page[str(pageCount)]
@@ -557,10 +693,10 @@ class TripAdvisor:
 								'tr':True,
 								'n':'16',
 								'd':hotelId}
-							controler_response = BeautifulSoup(self.s.get(self.baseurl+"/UserReviewController",headers = self.headers, params = args).text,'lxml')
+							# controler_response = BeautifulSoup(self.s.get(self.baseurl+"/UserReviewController",headers = self.headers, params = args).text,'lxml')
+							controler_response = BeautifulSoup(self.s.get(self.baseurl+"/UserReviewController", params = args).text,'lxml')
 							review_list += controler_response.findAll('div',{'class':'reviewSelector'})
 						for review in review_list:
-							print "id = ",review.get("id").strip("review_")
 							try:
 								if review.find('span',{'class':'ratingDate relativeDate'}):
 									review_date = review.find('span',{'class':'ratingDate relativeDate'}).get("title")
@@ -583,7 +719,8 @@ class TripAdvisor:
 										"LsoId":None,
 										"metaReferer":"Hotel_Review",
 										}
-									usr_response = BeautifulSoup(self.s.post(self.baseurl+"/MemberOverlay",params = args3, headers=self.headers).text,'lxml')
+									# usr_response = BeautifulSoup(self.s.post(self.baseurl+"/MemberOverlay",params = args3, headers=self.headers).text,'lxml')
+									usr_response = BeautifulSoup(self.s.post(self.baseurl+"/MemberOverlay",params = args3).text,'lxml')
 									username = usr_response.find("h3",{"class":"username"}).getText()
 							except:
 								username = ''
@@ -613,12 +750,18 @@ class TripAdvisor:
 										'gasl':hotelId,
 										'gapu':self.headers['X-Puid'],
 										'gams':'0',}
-									full_review_url = self.baseurl+"/ExpandedUserReviews-g"+details['geoId']+"-d"+hotelId
-									full_review = self.s.post(full_review_url, params = arg4, data = rev_payload)
+									full_review_url = self.baseurl+"ExpandedUserReviews-g"+details['geoId']+"-d"+hotelId
+									self.headers['User-Agent'] = "Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/49.0.2623.87 Chrome/49.0.2623.87 Safari/537.36"
+									self.headers['Origin'] = self.baseurl[:-1]
+									self.headers['Host'] = self.baseurl[8:-1]
+									self.headers['X-Requested-With'] = 'XMLHttpRequest'
+									self.headers['Content-type'] = "application/x-www-form-urlencoded; charset=UTF-8"
+									full_review = self.s.post(full_review_url, params = arg4, data = rev_payload, headers = self.headers)
 									full_review = full_review.text
 									full_reviewText = BeautifulSoup(full_review).find("div",{"class":"entry"}).find("p").getText().strip().replace("\n\n"," ").replace("  ","")
 									reviewText = full_reviewText
 							except Exception as e:
+								print "full review text not found because ", str(e)
 								reviewText = ''
 							try:
 								score = float(re.search('(\\d+(\\.\\d+)?)', review.find('span',{'class':'rate sprite-rating_s rating_s'}).find('img').get('alt').strip().replace(',','').replace('  ','')).group(1))
