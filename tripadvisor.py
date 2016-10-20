@@ -241,7 +241,6 @@ class TripAdvisor:
 				'details': True,
 			}
 			try:
-				self.headers['Content-type'] = "application/x-www-form-urlencoded; charset=UTF-8"
 				response = self.s.get(typeahead_url, params=payload, headers = self.headers)
 				url = response.json()
 			except Exception as e:
