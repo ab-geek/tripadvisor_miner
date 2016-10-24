@@ -533,11 +533,17 @@ class TripAdvisor:
 				if response.find('img',{'class':re.compile('rating')}).get('content'):
 					tripAdvisorRating = response.find('img',{'class':re.compile('rating')}).get('content')
 					if tripAdvisorRating:
-						tripAdvisorRating = float(tripAdvisorRating)
+						try:
+							tripAdvisorRating = float(tripAdvisorRating)
+						except:
+							pass
 				elif response.find('img',{'class':re.compile('rating')}).get('alt'):
 					tripAdvisorRating = response.find('img',{'class':re.compile('rating')}).get('alt').split()[0]
 					if tripAdvisorRating:
-						tripAdvisorRating = float(tripAdvisorRating)
+						try:
+							tripAdvisorRating = float(tripAdvisorRating)
+						except:
+							pass
 			if response.find('div',{'class':'popRanking popIndexValidation rank_text wrap'}):
 				if response.find('div',{'class':'popRanking popIndexValidation rank_text wrap'}).getText():
 					text = response.find('div',{'class':'popRanking popIndexValidation rank_text wrap'}).getText()
