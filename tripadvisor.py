@@ -15,7 +15,7 @@ import re
 import traceback
 
 class TripAdvisor:
-	debug = True
+	debug = False
 	def typeahead_fail(self,location):
 		s2 = requests.Session()
 		headers = {
@@ -281,11 +281,16 @@ class TripAdvisor:
 					print str(e)
 					print traceback.format_exc()
 					pass
+				# if last_page != 1:
+				# 	last_page = 5 #remove this
 				while (pageCount <= last_page):
 					hotel_details_per_page = {}
 					if ((pageCount > 1) and (str(pageCount) not in all_page.keys())):
 						# print "pageCount", pageCount
-						new_page_url = response.find('div',{'class':'pageNumbers'}).find('a',{'data-page-number':str(pageCount)})
+						try:
+							new_page_url = response.find('div',{'class':'pageNumbers'}).find('a',{'data-page-number':str(pageCount)})
+						except:
+							new_page_url = None
 						if new_page_url:
 							new_page_url = new_page_url.get('href')
 							all_page[str(pageCount)] = self.baseurl+new_page_url[1:]
@@ -323,18 +328,31 @@ class TripAdvisor:
 						if m:
 							hotelId=m.group(8)
 							geoId = m.group(5)
+							try:
+								hotelName = element.find('a').getText()
+							except:
+								hotelName = ''
+							try:
+								url = self.baseurl + element.find('a').get('href')[1:]
+							except:
+								url = None
 							hotel_details_per_page[hotelId]={
 															# 'hotelName': element.find('a').getText().encode('utf-8'),
-															'hotelName': element.find('a').getText(),
-															'url': self.baseurl + element.find('a').get('href')[1:],
+															'hotelName': hotelName,
+															'url': url,
 															'location':location,
 															'language':lang,
 															'searchSessionId': searchSessionId,
 															'geoId': geoId,
 
 							}
+							# if len(hotel_details_per_page.keys()) >= 10:
+							# 	break #remove this
 					print "processing "+str(len(hotel_details_per_page.keys()))+" number of hotels from search results"
-					self.make_hotel_json(hotel_details_per_page)
+					try:
+						self.make_hotel_json(hotel_details_per_page)
+					except Exception as e:
+						print "hotel per page Error ", str(e)
 					pageCount += 1
 	
 	def make_hotel_json(self, hotel_details_per_page):
@@ -385,12 +403,18 @@ class TripAdvisor:
 			hotelName = details['hotelName']
 			# if hotelId == '1950138':
 			# response = BeautifulSoup(self.s.get(details['url'], headers = self.headers).text,'lxml')
-			response = BeautifulSoup(self.s.get(details['url']).text,'lxml')
+			try:
+				response = BeautifulSoup(self.s.get(details['url']).text,'lxml')
+			except:
+				continue
 			self.headers['X-Puid'] = self.get_gapu(str(response))
 			gapu = self.get_gapu(str(response))
 			address = response.find('address')
 			# print address
-			email = address.find('div',{'class': 'ui_icon email fl icnLink'})
+			if address:
+				email = address.find('div',{'class': 'ui_icon email fl icnLink'})
+			else:
+				print "address tag not found"
 			if email:
 				span = email.findNext('div',{'class':'fl'})
 				if span:
@@ -511,7 +535,7 @@ class TripAdvisor:
 					if tripAdvisorRating:
 						tripAdvisorRating = float(tripAdvisorRating)
 				elif response.find('img',{'class':re.compile('rating')}).get('alt'):
-					tripAdvisorRating = response.find('img',{'class':re.compile('rating')}).get('alt')
+					tripAdvisorRating = response.find('img',{'class':re.compile('rating')}).get('alt').split()[0]
 					if tripAdvisorRating:
 						tripAdvisorRating = float(tripAdvisorRating)
 			if response.find('div',{'class':'popRanking popIndexValidation rank_text wrap'}):
@@ -644,7 +668,7 @@ class TripAdvisor:
 			last_page = 1
 			try:
 				last_page = response.find('div',{'class':'pageNumbers'}).findAll('a',{'class':'pageNum taLnk'})[-1].get('data-page-number')
-				print "last page ",last_page
+				# print "last page ",last_page
 			except Exception as e:
 				print "could not retrive last page because ", str(e)
 				pass
@@ -654,7 +678,8 @@ class TripAdvisor:
 				all_page = dict([(element.get('data-page-number'),self.baseurl+element.get('href')[1:]) for element in response.find('div',{'class':'pageNumbers'}).findAll('a')])
 			except:
 				pass
-
+			# if last_page != 1:
+			# 	last_page = 5 #remove this
 			while (pageCount <= last_page):
 				if ((pageCount > 1) and (str(pageCount) not in all_page.keys())):
 					new_page_url=None
@@ -760,7 +785,7 @@ class TripAdvisor:
 									full_reviewText = BeautifulSoup(full_review).find("div",{"class":"entry"}).find("p").getText().strip().replace("\n\n"," ").replace("  ","")
 									reviewText = full_reviewText
 							except Exception as e:
-								print "full review text not found because ", str(e)
+								# print "full review text not found because ", str(e)
 								reviewText = ''
 							try:
 								score = float(re.search('(\\d+(\\.\\d+)?)', review.find('span',{'class':'rate sprite-rating_s rating_s'}).find('img').get('alt').strip().replace(',','').replace('  ','')).group(1))
